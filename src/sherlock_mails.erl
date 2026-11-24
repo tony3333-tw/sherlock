@@ -1,3 +1,11 @@
+%% ---
+%%  Excerpted from "Programming Erlang, Second Edition",
+%%  published by The Pragmatic Bookshelf.
+%%  Copyrights apply to this code. It may not be used to create training material, 
+%%  courses, books, articles, and the like. Contact us if you are in doubt.
+%%  We make no guarantees that this code is fit for any purpose. 
+%%  Visit http://www.pragmaticprogrammer.com/titles/jaerlang2 for more book information.
+%%---
 -module(sherlock_mails).
 
 %% Copyright (c) 2009 Whoomph Software AB (joearms@gmail.com). All rights reserved.
@@ -180,7 +188,7 @@ parse_mails(Year) ->
     io:format("Written: ~s~n",[Out]),
     Len  = length(L),
     io:format("Year: ~s #entries = ~p size = ~6.2f Megabytes "
-	      "average =~6.2f bytes/entry~n",[Year, Len, Size/1000000, Size/Len]),
+	      "average =~6.2f bytes/engtry~n",[Year, Len, Size/1000000, Size/Len]),
     Len.
 
 parse_compressed_mails([File|T], N, L) ->
