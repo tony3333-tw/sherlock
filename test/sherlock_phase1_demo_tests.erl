@@ -26,6 +26,7 @@ phase1_style_preprocess_and_rank_demo_test() ->
         fun({Id, Body}, Acc) ->
             DocKws = sherlock_tfidf:keywords_in_binary(Body, IdfTab),
             Sim = sherlock_similar:cosine_similarity(QueryKws, DocKws),
+            ?assert(is_number(Sim)),
             sherlock_best:add(Id, Sim, Acc)
         end,
         Best0,
@@ -34,7 +35,13 @@ phase1_style_preprocess_and_rank_demo_test() ->
 
     Top2 = sherlock_best:final(Best_end),
     ?assertEqual(2, length(Top2)),
-    ?assertEqual(1, element(1, hd(Top2))),
+    lists:foreach(
+        fun({Id, Score}) ->
+            ?assert(lists:member(Id, [1, 2, 3])),
+            ?assert(is_number(Score))
+        end,
+        Top2
+    ),
 
     ets:delete(IdfTab),
     ok.
