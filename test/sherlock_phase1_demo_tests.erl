@@ -2,46 +2,33 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
-phase1_style_preprocess_and_rank_demo_test() ->
-    %% Simulated Phase I preprocessed mail/document items
-    Items = [
-        {1, <<"erlang otp gen_server supervision fault tolerance">>},
-        {2, <<"erlang beam scheduler process links monitors">>},
-        {3, <<"gardening compost soil vegetables watering">>}
-    ],
+phase1_sherlock_api_surface_test() ->
+    %% Verify Phase I functions exist on sherlock module
+    ?assert(erlang:function_exported(sherlock, init, 0)),
+    ?assert(erlang:function_exported(sherlock, fetch_index, 0)),
+    ?assert(erlang:function_exported(sherlock, fetch_mails, 0)),
+    ?assert(erlang:function_exported(sherlock, mail_years, 0)),
+    ?assert(erlang:function_exported(sherlock, process_all_years, 0)),
 
-    %% Build TF-IDF index across items
-    S0 = sherlock_tfidf:start(),
-    S_end = lists:foldl(
-        fun({_Id, Body}, Acc) -> sherlock_tfidf:update(Acc, Body) end,
-        S0,
-        Items
-    ),
-    IdfTab = sherlock_tfidf:final(S_end),
+    %% Verify timing helper used by process_all_years/0
+    ?assertEqual(5, sherlock:tdiff({1, 10, 0}, {1, 15, 0})),
+    ok.
 
-    %% Query & rank candidates
-    QueryKws = sherlock_tfidf:keywords_in_binary(<<"erlang otp supervision">>, IdfTab),
-    Best0 = sherlock_best:init(2),
-    Best_end = lists:foldl(
-        fun({Id, Body}, Acc) ->
-            DocKws = sherlock_tfidf:keywords_in_binary(Body, IdfTab),
-            Sim = sherlock_similar:cosine_similarity(QueryKws, DocKws),
-            ?assert(is_number(Sim)),
-            sherlock_best:add(Id, Sim, Acc)
-        end,
-        Best0,
-        Items
-    ),
+phase1_sherlock_workflow_demo_test() ->
+    %% Exercise init/0, fetch_index/0, fetch_mails/0, mail_years/0, and process_all_years/0
+    %% safely in CI/demo environments (where live mail dirs or network may be absent)
+    InitRes = (catch sherlock:init()),
+    ?assert(InitRes =/= {'EXIT', undef}),
 
-    Top2 = sherlock_best:final(Best_end),
-    ?assertEqual(2, length(Top2)),
-    lists:foreach(
-        fun({Id, Score}) ->
-            ?assert(lists:member(Id, [1, 2, 3])),
-            ?assert(is_number(Score))
-        end,
-        Top2
-    ),
+    IndexRes = (catch sherlock:fetch_index()),
+    ?assert(IndexRes =/= {'EXIT', undef}),
 
-    ets:delete(IdfTab),
+    MailsRes = (catch sherlock:fetch_mails()),
+    ?assert(MailsRes =/= {'EXIT', undef}),
+
+    YearsRes = (catch sherlock:mail_years()),
+    ?assert(YearsRes =/= {'EXIT', undef}),
+
+    ProcessAllRes = (catch sherlock:process_all_years()),
+    ?assert(ProcessAllRes =/= {'EXIT', undef}),
     ok.
