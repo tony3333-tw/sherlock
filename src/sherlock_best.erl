@@ -28,3 +28,20 @@ trim(_, [])    -> [];
 trim(N, [H|T]) -> [H|trim(N-1,T)].
     
 final({container,_,L}) -> L.
+
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+
+best_top_n_test() ->
+    C0 = init(2),
+    ?assertEqual([], final(C0)),
+    C1 = add("doc1", 0.2, C0),
+    C2 = add("doc2", 0.9, C1),
+    C3 = add("doc3", 0.5, C2),
+    ?assertEqual([{"doc2", 0.9}, {"doc3", 0.5}], final(C3)).
+
+best_zero_capacity_test() ->
+    C0 = init(0),
+    C1 = add("doc1", 1.0, C0),
+    ?assertEqual([], final(C1)).
+-endif.

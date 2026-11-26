@@ -140,3 +140,25 @@ integer_pad(T, PadSize) when size(T) < PadSize ->
     integer_pad(<<$0, T/binary>>, PadSize);
 integer_pad(T, _) ->
     T.
+
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+
+standard_analyzer_test() ->
+    ?assertEqual(
+       {ok, [<<"erlang">>, skip, <<"otp">>]},
+       standard_analyzer_factory(<<"Erlang and OTP">>, ["3"])).
+
+whitespace_and_noop_analyzer_test() ->
+    ?assertEqual(
+       {ok, [<<"a">>, <<"b">>, <<"c">>]},
+       whitespace_analyzer_factory(<<"a  b\nc">>, [])),
+    ?assertEqual(
+       {ok, [<<"raw text">>]},
+       noop_analyzer_factory(<<"raw text">>, [])).
+
+integer_analyzer_test() ->
+    ?assertEqual(
+       {ok, [<<"007">>, <<"-042">>]},
+       integer_analyzer_factory(<<"id: 7, diff: -42">>, ["3"])).
+-endif.

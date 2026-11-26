@@ -42,4 +42,27 @@ norm(L) ->
     %% io:format("L2=~p~n",[L2]),
     math:sqrt(L2).
 
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
 
+empty_vector_similarity_test() ->
+    ?assertEqual(0, cosine_similarity([], [{"a", 1.0}])),
+    ?assertEqual(0, cosine_similarity([{"a", 1.0}], [])),
+    ?assertEqual(0, cosine_similarity([], [])).
+
+identical_vector_similarity_test() ->
+    V = [{"erlang", 0.6}, {"otp", 0.8}],
+    Sim = cosine_similarity(V, V),
+    ?assert(abs(Sim - 1.0) < 1.0e-9).
+
+orthogonal_vector_similarity_test() ->
+    V1 = [{"x", 1.0}],
+    V2 = [{"y", 1.0}],
+    ?assertEqual(0.0, cosine_similarity(V1, V2)).
+
+cross_and_norm_test() ->
+    V1 = [{"a", 3.0}, {"b", 4.0}],
+    V2 = [{"a", 1.0}, {"c", 2.0}],
+    ?assertEqual(3.0, cross(V1, V2)),
+    ?assertEqual(5.0, norm(V1)).
+-endif.

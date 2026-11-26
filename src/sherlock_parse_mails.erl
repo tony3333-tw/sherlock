@@ -152,3 +152,43 @@ reduce_subject_line(<<"[erlang-questions] ", B/binary>>) ->
     B;
 reduce_subject_line(B) ->
     B.
+
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+
+get_entries_and_parse_entries_test() ->
+    Raw = <<"From joe at example.com  Thu Nov 26 09:00:00 2026\n"
+            "From: joe at example.com (Joe Armstrong)\n"
+            "Date: Thu, 26 Nov 2026 09:00:00 +0800\n"
+            "Subject: [erlang-questions] Hello EUnit\n"
+            "Message-ID: <1@example.com>\n"
+            "\n"
+            "Body line 1\n">>,
+    Entries = get_entries(Raw),
+    ?assertEqual(1, length(Entries)),
+    {NextId, Posts} = parse_entries(Entries, 1, []),
+    ?assertEqual(2, NextId),
+    ?assertEqual(1, length(Posts)),
+    [Post] = Posts,
+    ?assertEqual(1, Post#post.id),
+    ?assertEqual(<<"Joe Armstrong">>, Post#post.from),
+    ?assertEqual(<<"Hello EUnit">>, Post#post.subject),
+    ?assertEqual(<<"Body line 1\n">>, Post#post.body).
+
+parse_compressed_mail_file_test() ->
+    GzFile = "/tmp/sherlock_parse_mails_test.gz",
+    _ = file:delete(GzFile),
+    Raw = <<"From alice at example.com  Thu Nov 26 10:00:00 2026\n"
+            "From: alice at example.com (Alice)\n"
+            "Subject: Test\n"
+            "\n"
+            "Hi\n">>,
+    ok = file:write_file(GzFile, zlib:gzip(Raw)),
+    {NextId, Posts} = parse_compressed_mail_file(GzFile, 5, []),
+    ?assertEqual(6, NextId),
+    ?assertEqual(1, length(Posts)),
+    [Post] = Posts,
+    ?assertEqual(5, Post#post.id),
+    ?assertEqual(<<"Alice">>, Post#post.from),
+    ?assertEqual(ok, file:delete(GzFile)).
+-endif.

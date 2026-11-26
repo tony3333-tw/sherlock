@@ -43,14 +43,14 @@ merge_kv([], D) ->
 month2index("January")   -> 1;
 month2index("February")  -> 2; 
 month2index("March")     -> 3; 
-month2index("April")     -> 4;
+month2index("April")     -> 4; 
 month2index("May")       -> 5; 
-month2index("June")      -> 6;
-month2index("July")      -> 7;
+month2index("June")      -> 6; 
+month2index("July")      -> 7; 
 month2index("August")    -> 8; 
 month2index("September") -> 9; 
 month2index("October")   -> 10; 
-month2index("November")  -> 11;
+month2index("November")  -> 11; 
 month2index("December")  -> 12.
     
 %%----------------------------------------------------------------------
@@ -70,6 +70,26 @@ show(N, Str, Tab, Key) ->
     io:format("~s :: ~p => ~p~n",[Str,Key,Val]),
     show(N-1, Str, Tab, ets:next(Tab, Key)).
 
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
 
+merge_kv_test() ->
+    Merged = merge_kv([{a, 1}, {b, 2}, {a, 3}]),
+    ?assertEqual({ok, [3, 1]}, lists:keyfind(a, 1, Merged)),
+    ?assertEqual({b, [2]}, lists:keyfind(b, 1, Merged)),
+    ?assertEqual([], merge_kv([])).
 
+month2index_test() ->
+    ?assertEqual(1, month2index("January")),
+    ?assertEqual(6, month2index("June")),
+    ?assertEqual(12, month2index("December")),
+    ?assertError(function_clause, month2index("NotAMonth")).
 
+term2file_and_file2term_test() ->
+    TmpFile = "/tmp/sherlock_lib_eunit_test.term",
+    _ = file:delete(TmpFile),
+    Term = {sample, [1, 2, 3]},
+    ?assertEqual(ok, term2file(Term, TmpFile)),
+    ?assertEqual(Term, file2term(TmpFile)),
+    ?assertEqual(ok, file:delete(TmpFile)).
+-endif.
