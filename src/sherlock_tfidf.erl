@@ -169,3 +169,18 @@ remove_duplicates([H|X=[H|_]], L) -> remove_duplicates(X, L);
 remove_duplicates([H|T], L)       -> remove_duplicates(T, [H|L]);
 remove_duplicates([], L)          -> L.
 
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+
+tfidf_pipeline_test() ->
+    S0 = start(),
+    S1 = update(S0, <<"erlang otp processes erlang">>),
+    S2 = update(S1, <<"erlang supervision trees">>),
+    IdfTab = final(S2),
+    ?assert(is_list(ets:tab2list(IdfTab))),
+    ?assert(length(ets:tab2list(IdfTab)) >= 3),
+    Keywords = keywords_in_binary(<<"erlang otp erlang">>, IdfTab),
+    ?assert(is_list(Keywords)),
+    ets:delete(IdfTab),
+    ok.
+-endif.
