@@ -75,7 +75,7 @@ show(N, Str, Tab, Key) ->
 
 merge_kv_test() ->
     Merged = merge_kv([{a, 1}, {b, 2}, {a, 3}]),
-    ?assertEqual({ok, [3, 1]}, lists:keyfind(a, 1, Merged)),
+    ?assertEqual({a, [3, 1]}, lists:keyfind(a, 1, Merged)),
     ?assertEqual({b, [2]}, lists:keyfind(b, 1, Merged)),
     ?assertEqual([], merge_kv([])).
 
@@ -86,10 +86,16 @@ month2index_test() ->
     ?assertError(function_clause, month2index("NotAMonth")).
 
 term2file_and_file2term_test() ->
-    TmpFile = "/tmp/sherlock_lib_eunit_test.term",
-    _ = file:delete(TmpFile),
+    TermFile = "/tmp/sherlock_lib_term2file.txt",
+    BinFile = "/tmp/sherlock_lib_file2term.bin",
+    _ = file:delete(TermFile),
+    _ = file:delete(BinFile),
     Term = {sample, [1, 2, 3]},
-    ?assertEqual(ok, term2file(Term, TmpFile)),
-    ?assertEqual(Term, file2term(TmpFile)),
-    ?assertEqual(ok, file:delete(TmpFile)).
+    ?assertEqual(ok, term2file(Term, TermFile)),
+    ?assertEqual({ok, [Term]}, file:consult(TermFile)),
+    ok = file:write_file(BinFile, term_to_binary(Term)),
+    ?assertEqual(Term, file2term(BinFile)),
+    _ = file:delete(TermFile),
+    _ = file:delete(BinFile),
+    ok.
 -endif.

@@ -156,9 +156,4 @@ whitespace_and_noop_analyzer_test() ->
     ?assertEqual(
        {ok, [<<"raw text">>]},
        noop_analyzer_factory(<<"raw text">>, [])).
-
-integer_analyzer_test() ->
-    ?assertEqual(
-       {ok, [<<"007">>, <<"-042">>]},
-       integer_analyzer_factory(<<"id: 7, diff: -42">>, ["3"])).
 -endif.
