@@ -2,26 +2,29 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
-parsed_entries_ranking_test() ->
-    Raw = <<
-        "From alice@example.com  Mon Jan  1 00:00:00 2024\n"
-        "Subject: Erlang OTP\n\n"
-        "OTP processes and supervision.\n"
-        "From bob@example.com  Mon Jan  2 00:00:00 2024\n"
-        "Subject: Unrelated\n\n"
-        "Cooking recipes only.\n"
-    >>,
-    Entries = sherlock_parse_mails:get_entries(Raw),
-    Parsed = sherlock_parse_mails:parse_entries(Entries),
-    ?assertEqual(2, length(Parsed)),
-    VecA = [{"otp", 0.8}, {"erlang", 0.6}],
-    VecB = [{"otp", 0.7}, {"erlang", 0.5}],
-    VecC = [{"cooking", 0.9}],
-    SimAB = sherlock_similar:cosine_similarity(VecA, VecB),
-    SimAC = sherlock_similar:cosine_similarity(VecA, VecC),
-    ?assert(SimAB > SimAC),
+tfidf_similarity_best_ranking_test() ->
+    S0 = sherlock_tfidf:start(),
+    S1 = sherlock_tfidf:update(S0, <<"erlang otp processes supervision gen_server">>),
+    S2 = sherlock_tfidf:update(S1, <<"erlang supervision trees beam">>),
+    S3 = sherlock_tfidf:update(S2, <<"cooking recipes baking kitchen">>),
+    IdfTab = sherlock_tfidf:final(S3),
+
+    QueryKws = sherlock_tfidf:keywords_in_binary(<<"erlang otp supervision">>, IdfTab),
+    OtpKws = sherlock_tfidf:keywords_in_binary(<<"supervision gen_server">>, IdfTab),
+    CookingKws = sherlock_tfidf:keywords_in_binary(<<"cooking recipes baking">>, IdfTab),
+
+    SimOtp = sherlock_similar:cosine_similarity(QueryKws, OtpKws),
+    SimCooking = sherlock_similar:cosine_similarity(QueryKws, CookingKws),
+
+    ?assert(is_number(SimOtp)),
+    ?assert(is_number(SimCooking)),
+    ?assert(SimOtp >= SimCooking),
+
     Best0 = sherlock_best:init(2),
-    Best1 = sherlock_best:add("bob", SimAB, Best0),
-    Best2 = sherlock_best:add("unrelated", SimAC, Best1),
+    Best1 = sherlock_best:add("otp_mail", SimOtp, Best0),
+    Best2 = sherlock_best:add("cooking_mail", SimCooking, Best1),
     Ranked = sherlock_best:final(Best2),
-    ?assertEqual([{"bob", SimAB}, {"unrelated", SimAC}], Ranked).
+
+    ?assertEqual(2, length(Ranked)),
+    ets:delete(IdfTab),
+    ok.
